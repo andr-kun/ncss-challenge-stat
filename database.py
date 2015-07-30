@@ -5,6 +5,7 @@ import time
 import random
 import copy
 
+include_user_stat = False
 json_url = 'http://andr-kun.github.io/ncss-challenge-stat/challenge-message-stats-2014.json'
 
 try:
@@ -49,21 +50,22 @@ for row in c.execute("SELECT date_time, sum(post) FROM user_post_over_time GROUP
     time_count = {"x": row[0], "y": row[1]}
     combined_time_series.append(time_count)
 
-user_time_series = []
-current_user = ""
-current_user_series = []
-for row in c.execute("SELECT date_time, user, post FROM user_post_over_time ORDER BY user ASC, date_time ASC"):
-    user = row[1]
-    if current_user != user:
-        if current_user != "":
-            user_time_series.append({"name": row[1], "data":current_user_series})
+all_time_series = []
+if include_user_stat:
+    current_user = ""
+    current_user_series = []
+    for row in c.execute("SELECT date_time, user, post FROM user_post_over_time ORDER BY user ASC, date_time ASC"):
+        user = row[1]
+        if current_user != user:
+            if current_user != "":
+                all_time_series.append({"name": row[1], "data":current_user_series})
 
-        current_user = user
-        current_user_series = []
+            current_user = user
+            current_user_series = []
 
-    user_time_count = {"x": row[0], "y": row[2]}
-    current_user_series.append(user_time_count)
+        user_time_count = {"x": row[0], "y": row[2]}
+        current_user_series.append(user_time_count)
 
-user_time_series.append({"name": "overall", "data": combined_time_series})
-json.dump(user_time_series, open("time-series-stats.json","w"))
+all_time_series.append({"name": "overall", "data": combined_time_series})
+json.dump(all_time_series, open("time-series-stats.json","w"))
 json.dump(data, open("challenge-message-stats.json","w"))

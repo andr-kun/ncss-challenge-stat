@@ -25,7 +25,19 @@
       if (error) return console.warn(error);
       var timeline_data = json;
       visualiseTimelineActivity(timeline_data);
-      $('select').material_select();
+
+      if ($("#user-selector option").size() > 1){
+        $('select').material_select();
+
+        $(document).ready(function() {
+          $("#user-selector").change(function(e){
+            updateTimelineByUser($("#user-selector").val());
+          });
+        });
+      } else {
+        $('#post-user-selector').empty();
+      }
+
     });
 
     d3.json("challenge-message-stats.json", function(error, json) {
@@ -44,9 +56,8 @@
           val.disabled = false;
         } else {
           val.disabled = true;
+          $("#user-selector").append("<option value='"+val.name+"'>"+val.name+"</option>");
         }
-
-        $("#user-selector").append("<option value='"+val.name+"'>"+val.name+"</option>");
       })
 
       timeline_graph = new Rickshaw.Graph( {
@@ -227,12 +238,6 @@
       timeline_graph.render();
     });
 
-    $(document).ready(function() {
-      $("#user-selector").change(function(e){
-        updateTimelineByUser($("#user-selector").val());
-      });
-    });
-
     </script>
   </head>
   <body>
@@ -250,7 +255,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="input-field col s12">
+        <div id="post-user-selector" class="input-field col s12">
           <select id="user-selector">
             <option value="overall" selected>Overall</option>
           </select>
