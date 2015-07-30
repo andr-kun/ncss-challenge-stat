@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/rickshaw.min.css">
+    <link rel="stylesheet" href="css/materialize.min.css">
+    <link rel="stylesheet" href="css/jquery-ui.min.css">
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">-->
+
+    <!--<script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>-->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/materialize.min.js"></script>
+  	<script src="js/jquery-ui.min.js"></script>
+    <script src="js/d3.min.js"></script>
+    <script src="js/rickshaw.min.js"></script>
+    <script src="js/extensions.js"></script>
+
+    <script>
+
+    var timeline_per_user; // a global
+    var timeline_graph;
+
+    d3.json("time-series-stats.json", function(error, json) {
+      if (error) return console.warn(error);
+      var timeline_data = json;
+      visualiseTimelineActivity(timeline_data);
+      //$('select').material_select();
+    });
+
+    d3.json("challenge-message-stats-2014.json", function(error, json) {
+      if (error) return console.warn(error);
+      var current_data = json.by_nick;
+      visualisePostsDistribution(current_data);
+    });
+
+    function visualiseTimelineActivity(data){
+      var palette = new Rickshaw.Color.Palette( { scheme: 'spectrum2000' } );
+
+      var selected_data = []
+      timeline_per_user = {}
+
+      $.each(data, function(id, val){
+        val.color=palette.color();
+
+        if (val.name == "overall"){
+          selected_data.push(val)
+        }
+
+        timeline_per_user[val.name] = [val]
+        //$("#user-selector").append("<option value='"+val.name+"'>"+val.name+"</option>");
+      })
+
+      timeline_graph = new Rickshaw.Graph( {
+      	element: document.getElementById("activity-chart"),
+      	width: $("#post-activity").width(),
+      	height: 400,
+      	renderer: 'line',
+        interpolation: 'linear',
+      	stroke: true,
+      	preserve: true,
+      	series: selected_data
+      } );
+
+      timeline_graph.render();
+
+      var preview = new Rickshaw.Graph.RangeSlider( {
+      	graph: timeline_graph,
+      	element: document.getElementById('activity-preview'),
+      } );
+
+      var hover_detail = new Rickshaw.Graph.HoverDetail( {
+      	graph: timeline_graph,
+      	xFormatter: function(x) {
+      		return new Date(x*1000).toString();
+      	}
+      } );
+
+      var ticks_treatment = 'glow';
+
+      var xAxis = new Rickshaw.Graph.Axis.Time( {
+      	graph: timeline_graph,
+      	ticksTreatment: ticks_treatment,
+      	timeFixture: new Rickshaw.Fixtures.Time.Local()
+      } );
+
+      xAxis.render();
+
+      var yAxis = new Rickshaw.Graph.Axis.Y( {
+      	graph: timeline_graph,
+      	tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+      	ticksTreatment: ticks_treatment
+      } );
+
+      yAxis.render();
+    }
+
+    function updateTimelineByUser(user){
+      timeline_graph.series = timeline_per_user["user"]
+      timeline_graph.update();
+    }
+
+    function visualisePostsDistribution(data){
+      var user_post = [];
+      var sum_post = 0;
+
+      $.each(data, function(key,value){
+        user_post.push({"name":key,"posts":value})
+        sum_post += +value
+      });
+
+      user_post.sort(function (a, b) {
+        if (a.posts > b.posts) {
+          return -1;
+        }
+        if (a.posts < b.posts) {
+          return 1;
+        }
+        // a must be equal to b
+        return 0;
+      });
+
+      $("#post-num").append(sum_post);
+      $.each(user_post, function(index, item){
+        $("#post-dist-table > tbody").append("<tr><td>"+item["name"]+"</td><td>"+item["posts"]+"</td></tr>")
+      })
+
+      // Draw pie chart
+      var pie_width = 500,
+          pie_height = 500,
+          pie_radius = Math.min(pie_width, pie_height) / 2;
+
+      var color = d3.scale.category20();
+
+      var arc = d3.svg.arc()
+          .outerRadius(pie_radius - 10)
+          .innerRadius(pie_radius - 75);
+
+      var svg = d3.select("#post-donut-chart").append("svg")
+          .attr("width", pie_width)
+          .attr("height", pie_height)
+          .append("g")
+          .attr("transform", "translate(" + pie_width / 2 + "," + pie_height / 2 + ")")
+          .attr("preserveAspectRatio","xMinYMin meet")
+          .attr("viewBox", "0 0 "+pie_width+" "+pie_height);
+
+      var pie = d3.layout.pie()
+          .value(function(d) {return d.posts;})
+          .sort(null);
+
+      var g = svg.selectAll(".arc")
+          .data(pie(user_post))
+          .enter()
+          .append("g")
+          .attr("class", "arc");
+
+      g.append("path")
+          .attr("d", arc)
+          .style("fill", function(d,i) { return color(i); });
+
+      g.append("text")
+          .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+          .attr("dy", ".35em")
+          .attr("z-index", "-1")
+          .style("text-anchor", "middle")
+          .text(function(d,i) { return (i < 20) ? d.data.name : ""; });
+
+      //Draw bar chart
+      var bar_ind_height = 25;
+      var bar_left_width = 125;
+      var gap = 1;
+      var bar_width = 525;
+      var bar_height = (bar_ind_height + gap * 2) * user_post.length + 30;
+
+      var users = [];
+      user_post.forEach(function(d) { users.push(d.name); });
+
+      var y = d3.scale.ordinal()
+          .domain(users)
+          .rangeBands([0, (bar_ind_height + 2 * gap) * user_post.length]);
+
+      var x = d3.scale.linear()
+          .range([bar_width - bar_left_width - 40,0])
+          .domain([d3.max(user_post, function(d){return d.posts;}),0]);
+
+      var bar_svg = d3.select("#post-bar-chart").append('svg')
+          .attr('width', bar_width)
+          .attr('height', bar_height)
+          .append("g")
+          .attr("transform", "translate(0, 20)")
+          .attr("preserveAspectRatio","xMinYMin meet")
+          .attr("viewBox", "0 0 "+bar_width+" "+bar_height);
+
+      var bar = bar_svg.selectAll("g")
+          .data(user_post)
+          .enter().append("g");
+
+      bar.append("rect")
+          .attr("x", bar_left_width)
+          .attr("y", function(d) { return y(d.name); })
+          .attr("height", function(d) { return bar_ind_height; })
+          .attr("width", function(d) { return x(d.posts); })
+          .attr("user", function(d) { return d.name; })
+          .style("fill", function(d,i) { return color(i); });
+
+      bar.append("text")
+          .attr("x", 0)
+          .attr("y", function(d) { return y(d.name)+5; })
+          .attr("dy", ".75em")
+          .text(function(d) { return d.name; });
+    }
+
+    $(window).resize(function(){
+      $("#activity-preview").width($("#post-activity").width());
+      timeline_graph.width = $("#post-activity").width();
+      timeline_graph.update()
+    });
+
+    /*$(window).ready(function() {
+      $("#user-selector").change(function(e){
+        console.log($("#user-selector").val());
+        updateTimelineByUser($("#user-selector").val());
+      })
+    });*/
+
+    </script>
+  </head>
+  <body>
+    <nav class="top-nav">
+      <div class="container">
+        <div class="nav-wrapper">
+          <a href="#" class="page-title">NCSS Challenge message statistics</a>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row">
+        <div id="post-activity-title" class="col s12">
+          <h2> Post activity over time </h2>
+        </div>
+      </div>
+      <div class="row">
+        <!--<div class="input-field col s12">
+          <select id="user-selector">
+            <option value="overall" selected>Overall</option>
+          </select>
+          <label>Select user</label>
+        </div>-->
+        <div id="post-activity" class="col s12">
+          <div id="activity-chart"></div>
+	        <div id="activity-preview"></div>
+        </div>
+        <div id="activity-legend" class="col s2">
+        </div>
+      </div>
+      <div class="row">
+        <div id="post-distribution-title" class="col s12">
+          <h2> Post distribution </h2>
+        </div>
+        <div id="post-distribution-table" class="col s12 m6">
+          <h5> Total number of post: <span id="post-num"></span></h5>
+          <table id="post-dist-table" class="responsive-table">
+            <thead>
+              <tr>
+                  <th data-field="name">Name</th>
+                  <th data-field="post">Number of Post</th>
+              </tr>
+              <tbody>
+              </tbody>
+            </thead>
+          </table>
+        </div>
+        <div id="post-distribution-graph" class="col s12 m6">
+          <h5>Pie chart</h5>
+          <div id="post-donut-chart">
+          </div>
+          <h5>Bar chart</h5>
+          <div id="post-bar-chart">
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
