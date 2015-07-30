@@ -5,11 +5,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/rickshaw.min.css">
     <link rel="stylesheet" href="css/materialize.min.css">
-    <link rel="stylesheet" href="css/jquery-ui.min.css">
 
     <script src="js/jquery.min.js"></script>
     <script src="js/materialize.min.js"></script>
-  	<script src="js/jquery-ui.min.js"></script>
     <script src="js/d3.min.js"></script>
     <script src="js/rickshaw.min.js"></script>
     <script src="js/extensions.js"></script>
@@ -17,6 +15,7 @@
     <script>
 
     var timeline_graph;
+    var timeline_preview;
 
     d3.json("time-series-stats.json", function(error, json) {
       if (error) return console.warn(error);
@@ -58,11 +57,10 @@
 
       timeline_graph.render();
 
-      var preview = new Rickshaw.Graph.RangeSlider.Preview( {
+      timeline_preview = new Rickshaw.Graph.RangeSlider.Preview( {
       	graph: timeline_graph,
       	element: document.getElementById('activity-preview'),
       } );
-
 
       var hover_detail = new Rickshaw.Graph.HoverDetail( {
       	graph: timeline_graph,
@@ -226,10 +224,10 @@
       timeline_graph.update()
     });
 
-    $(window).ready(function() {
+    $(document).ready(function() {
       $("#user-selector").change(function(e){
         updateTimelineByUser($("#user-selector").val());
-      })
+      });
     });
 
     </script>
@@ -280,9 +278,17 @@
           </table>
         </div>
         <div id="post-distribution-graph" class="col s12 m6">
+            <ul class="tabs">
+              <li class="tab col s6"><a class="active" href="#pie-chart">Pie chart</a></li>
+              <li class="tab col s6"><a href="#bar-chart">Bar chart</a></li>
+            </ul>
+        </div>
+        <div id="pie-chart" class="col s12 m6">
           <h5>Pie chart</h5>
           <div id="post-donut-chart">
           </div>
+        </div>
+        <div id="bar-chart" class="col s12 m6">
           <h5>Bar chart</h5>
           <div id="post-bar-chart">
           </div>
