@@ -29,7 +29,7 @@
       //$('select').material_select();
     });
 
-    d3.json("challenge-message-stats-2014.json", function(error, json) {
+    d3.json("challenge-message-stats.json", function(error, json) {
       if (error) return console.warn(error);
       var current_data = json.by_nick;
       visualisePostsDistribution(current_data);

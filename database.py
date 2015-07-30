@@ -5,7 +5,7 @@ import time
 import random
 import copy
 
-json_url = 'http://localhost:8000/challenge-message-stats-2014.json'
+json_url = 'http://andr-kun.github.io/ncss-challenge-stat/challenge-message-stats-2014.json'
 
 try:
     data = json.load(urllib.urlopen(json_url))
@@ -53,7 +53,6 @@ user_time_series = []
 current_user = ""
 current_user_series = []
 for row in c.execute("SELECT date_time, user, post FROM user_post_over_time ORDER BY user ASC, date_time ASC"):
-    print(row)
     user = row[1]
     if current_user != user:
         if current_user != "":
@@ -65,6 +64,6 @@ for row in c.execute("SELECT date_time, user, post FROM user_post_over_time ORDE
     user_time_count = {"x": row[0], "y": row[2]}
     current_user_series.append(user_time_count)
 
-print(user_time_series)
 user_time_series.append({"name": "overall", "data": combined_time_series})
 json.dump(user_time_series, open("time-series-stats.json","w"))
+json.dump(data, open("challenge-message-stats.json","w"))
