@@ -6,10 +6,7 @@
     <link rel="stylesheet" href="css/rickshaw.min.css">
     <link rel="stylesheet" href="css/materialize.min.css">
     <link rel="stylesheet" href="css/jquery-ui.min.css">
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">-->
 
-    <!--<script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>-->
     <script src="js/jquery.min.js"></script>
     <script src="js/materialize.min.js"></script>
   	<script src="js/jquery-ui.min.js"></script>
@@ -19,14 +16,13 @@
 
     <script>
 
-    var timeline_per_user; // a global
     var timeline_graph;
 
     d3.json("time-series-stats.json", function(error, json) {
       if (error) return console.warn(error);
       var timeline_data = json;
       visualiseTimelineActivity(timeline_data);
-      //$('select').material_select();
+      $('select').material_select();
     });
 
     d3.json("challenge-message-stats.json", function(error, json) {
@@ -38,18 +34,16 @@
     function visualiseTimelineActivity(data){
       var palette = new Rickshaw.Color.Palette( { scheme: 'spectrum2000' } );
 
-      var selected_data = []
-      timeline_per_user = {}
-
       $.each(data, function(id, val){
         val.color=palette.color();
 
         if (val.name == "overall"){
-          selected_data.push(val)
+          val.disabled = false;
+        } else {
+          val.disabled = true;
         }
 
-        timeline_per_user[val.name] = [val]
-        //$("#user-selector").append("<option value='"+val.name+"'>"+val.name+"</option>");
+        $("#user-selector").append("<option value='"+val.name+"'>"+val.name+"</option>");
       })
 
       timeline_graph = new Rickshaw.Graph( {
@@ -57,10 +51,9 @@
       	width: $("#post-activity").width(),
       	height: 400,
       	renderer: 'line',
-        interpolation: 'linear',
       	stroke: true,
       	preserve: true,
-      	series: selected_data
+      	series: data
       } );
 
       timeline_graph.render();
@@ -98,7 +91,13 @@
     }
 
     function updateTimelineByUser(user){
-      timeline_graph.series = timeline_per_user["user"]
+      $.each(timeline_graph.series, function(id, val){
+        if (val.name != user){
+          val.disabled = true;
+        } else {
+          val.disabled = false;
+        }
+      })
       timeline_graph.update();
     }
 
@@ -227,12 +226,11 @@
       timeline_graph.update()
     });
 
-    /*$(window).ready(function() {
+    $(window).ready(function() {
       $("#user-selector").change(function(e){
-        console.log($("#user-selector").val());
         updateTimelineByUser($("#user-selector").val());
       })
-    });*/
+    });
 
     </script>
   </head>
@@ -251,12 +249,12 @@
         </div>
       </div>
       <div class="row">
-        <!--<div class="input-field col s12">
+        <div class="input-field col s12">
           <select id="user-selector">
             <option value="overall" selected>Overall</option>
           </select>
           <label>Select user</label>
-        </div>-->
+        </div>
         <div id="post-activity" class="col s12">
           <div id="activity-chart"></div>
 	        <div id="activity-preview"></div>
