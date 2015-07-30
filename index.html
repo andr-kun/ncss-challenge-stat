@@ -65,10 +65,11 @@
 
       timeline_graph.render();
 
-      var preview = new Rickshaw.Graph.RangeSlider( {
+      var preview = new Rickshaw.Graph.RangeSlider.Preview( {
       	graph: timeline_graph,
       	element: document.getElementById('activity-preview'),
       } );
+
 
       var hover_detail = new Rickshaw.Graph.HoverDetail( {
       	graph: timeline_graph,
@@ -206,9 +207,18 @@
 
       bar.append("text")
           .attr("x", 0)
-          .attr("y", function(d) { return y(d.name)+5; })
+          .attr("y", function(d) { return y(d.name) + 5; })
           .attr("dy", ".75em")
           .text(function(d) { return d.name; });
+
+      bar.append("text")
+          .attr("x", function(d) { return x(d.posts) + bar_left_width; })
+          .attr("y", function(d) { return y(d.name) + y.rangeBand()/2; })
+          .attr("dx", 5)
+          .attr("dy", ".36em")
+          .attr("text-anchor", "start")
+          .attr('class', 'score')
+          .text(function(d) { return d.posts; });
     }
 
     $(window).resize(function(){
