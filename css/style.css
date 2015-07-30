@@ -16,10 +16,22 @@ nav.top-nav a.page-title {
     font-size: 48px;
 }
 
-@media only screen and (max-device-width: 1024px) {
+/* special for title bar only */
+@media only screen and (max-width: 1096px) {
+  .top-nav{
+    height: 61px;
+    background-color: #014568!important;
+  }
+
   nav.top-nav a.page-title {
-      line-height: 122px!important;
+      line-height: 61px!important;
       font-size: 24px!important;
+  }
+}
+
+@media only screen and (max-width: 993px){
+  #post-distribution-graph-tabs{
+    margin-top: 20px;
   }
 }
 
