@@ -1,4 +1,4 @@
-import urllib
+import urllib2
 import json
 import sqlite3
 import time
@@ -9,7 +9,7 @@ include_user_stat = False
 json_url = 'http://andr-kun.github.io/ncss-challenge-stat/challenge-message-stats-2014.json'
 
 try:
-    data = json.load(urllib.urlopen(json_url))
+    data = json.load(urllib2.urlopen(json_url))
 except:
     print("Unable to contact server for json update")
     exit()
